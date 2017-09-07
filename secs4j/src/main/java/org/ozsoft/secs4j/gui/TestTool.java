@@ -50,6 +50,7 @@ import org.ozsoft.secs4j.SecsConstants;
 import org.ozsoft.secs4j.SecsEquipment;
 import org.ozsoft.secs4j.SecsEquipmentListener;
 import org.ozsoft.secs4j.SecsException;
+import org.ozsoft.secs4j.message.S2F13;
 
 /**
  * Test tool with Swing GUI to simulate a SECS equipment and interactively test communicating with other SECS equipment.
@@ -93,6 +94,8 @@ public class TestTool implements SecsEquipmentListener {
     private JTextArea sendText;
     
     private JButton sendButton;
+    
+    private JButton sendS2F13Button;
     
     private JTextArea traceText;
     
@@ -170,6 +173,7 @@ public class TestTool implements SecsEquipmentListener {
             public void actionPerformed(ActionEvent e) {
                 hostText.setEnabled(true);
                 hostText.setText(lastHost);
+                sendS2F13Button.setEnabled(true);
             } 
         });
         gbc.gridx = 1;
@@ -190,6 +194,7 @@ public class TestTool implements SecsEquipmentListener {
                 lastHost = hostText.getText();
                 hostText.setText(SecsConstants.DEFAULT_HOST);
                 hostText.setEnabled(false);
+                sendS2F13Button.setEnabled(false);
             } 
         });
         gbc.gridx = 2;
@@ -411,10 +416,29 @@ public class TestTool implements SecsEquipmentListener {
         gbc.insets = new Insets(5, 5, 5, 5);
         panel.add(scrollPane, gbc);
         
+        sendS2F13Button = new JButton("Send S2F3");
+        sendS2F13Button.setEnabled(activeButton.isSelected());
+        sendS2F13Button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	sendS2F13(); 
+            }
+        });
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0.0;
+        gbc.weighty = 0.0;
+        gbc.insets = new Insets(5, 0, 5, 5);
+        panel.add(sendS2F13Button, gbc);
+        
         sendButton = new JButton("Send");
         sendButton.setEnabled(false);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.CENTER;
@@ -527,6 +551,21 @@ public class TestTool implements SecsEquipmentListener {
                 traceText.setCaretPosition(traceText.getText().length());
             }
         });
+    }
+    
+    private void sendS2F13(){
+    	
+    	try
+    	{
+    		S2F13 primaryMessage = new S2F13();
+    		primaryMessage.setTestData();
+        	equipment.sendMessage(primaryMessage);
+    	}
+    	catch(SecsException e) {
+    		JOptionPane.showMessageDialog(frame, "Send S2F13 message error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    	}
+    	
+    	
     }
 
 }

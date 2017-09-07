@@ -38,6 +38,8 @@ import org.ozsoft.secs4j.message.S1F16;
 import org.ozsoft.secs4j.message.S1F17;
 import org.ozsoft.secs4j.message.S1F18;
 import org.ozsoft.secs4j.message.S1F2;
+import org.ozsoft.secs4j.message.S2F13;
+import org.ozsoft.secs4j.message.S2F14;
 import org.ozsoft.secs4j.message.S2F25;
 import org.ozsoft.secs4j.message.S2F26;
 import org.ozsoft.secs4j.message.SxF0;
@@ -152,8 +154,11 @@ public class SecsEquipment {
         addMessageType(S1F17.class); // Request ON-LINE (RONL)
         addMessageType(S1F18.class); // ON-LINE Acknowledge (ONLA)
         addMessageType(S2F25.class); // Request Loopback Diagnostic Request
-                                     // (LDR)
+        							 // (LDR)                                          
         addMessageType(S2F26.class); // Loopback Diagnostic Acknowledge (LDA)
+        
+        addMessageType(S2F13.class); // Equipment Constant Request
+        addMessageType(S2F14.class); // Equipment Constant Response
     }
 
     public int getDeviceId() {
@@ -363,6 +368,11 @@ public class SecsEquipment {
         listeners.remove(listener);
     }
     
+    public void receiveMessage(Message replyMessage) {
+    	for (SecsEquipmentListener listener : listeners) {
+            listener.messageReceived(replyMessage);
+        }
+    }
     public void sendMessage(SecsPrimaryMessage primaryMessage) throws SecsException {
         sendMessage(primaryMessage, true);
     }
@@ -662,6 +672,7 @@ public class SecsEquipment {
                     if (communicationState == CommunicationState.COMMUNICATING || dataMessage instanceof S1F13) {
                         // Redirect primary message to specific message handler.
                         LOG.trace(String.format("Handle primary message %s - %s", dataMessage.getType(), dataMessage.getDescripton()));
+                        receiveMessage(dataMessage);
                         replyMessage = ((SecsPrimaryMessage) dataMessage).handle();
                         replyMessage.setSessionId(deviceId);
                         replyMessage.setTransactionId(transactionId);
@@ -683,7 +694,9 @@ public class SecsEquipment {
                         }
                     }
                     // Redirect to specific message handler.
-                    ((SecsReplyMessage) dataMessage).handle();
+                    SecsReplyMessage theReplyMessage = ((SecsReplyMessage) message);
+                    theReplyMessage.handle();
+                    receiveMessage(theReplyMessage);
                 } else {
                     // Internal error (should never happen).
                     throw new SecsException("Invalid type of data message: " + dataMessage);
